@@ -31,7 +31,7 @@ class Location extends Model
 
     public function users()
     {
-        return $this->hasManyThrough(User::class, Team::class,);
+        return $this->hasManyThrough(User::class, Team::class);
     }
 
     public function team()

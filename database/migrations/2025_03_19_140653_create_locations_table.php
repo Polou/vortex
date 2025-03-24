@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('description');
             $table->string('category');
             $table->foreignId('team_id')->constrained();
-            $table->boolean('is_featured');
+            $table->boolean('is_featured')->default(false);
             $table->decimal('latitude', 10, 8);
             $table->decimal('longitude', 11, 8);
             $table->timestamps();

@@ -7,6 +7,7 @@ use App\Actions\Location\UpdateLocation;
 use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class LocationController extends Controller
@@ -54,8 +55,12 @@ class LocationController extends Controller
     public function update(Request $request, Location $location, UpdateLocation $updateLocation)
     {
         $validatedDatas = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
+            'name' => 'string|max:255',
+            'description' => 'string',
+            'is_featured' => [ //Only admin of team can change this
+                'boolean',
+                Rule::excludeIf(!$request->user()->hasTeamRole($location->team, 'admin'))
+            ]
         ]);
 
         $updateLocation->update($location, $validatedDatas);

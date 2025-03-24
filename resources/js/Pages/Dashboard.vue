@@ -10,18 +10,18 @@ let props = defineProps({
 })
 
 const editingId = ref(null); // ID de la location en cours d'édition
-const editData = ref({ name: '', description: '' }); // Données temporaires pour l'édition
+const editData = ref({ name: '', description: '', is_featured: 0 }); // Données temporaires pour l'édition
 
 // Activer le mode edition
 const startEditing = (location) => {
     editingId.value = location.id;
-    editData.value = { name: location.name, description: location.description };
+    editData.value = { name: location.name, description: location.description, is_featured: location.is_featured };
 };
 
 // Annuler l'edition
 const cancelEditing = () => {
     editingId.value = null;
-    editData.value = { name: '', description: '' };
+    editData.value = { name: '', description: '', is_featured: 0 };
 };
 
 // Sauvegarder les modif
@@ -29,6 +29,7 @@ const saveLocation = (locationId) => {
     router.patch(route('locations.update', { location: locationId }), {
         name: editData.value.name,
         description: editData.value.description,
+        is_featured: parseInt(editData.value.is_featured)
     }, {
         onSuccess: () => {
             editingId.value = null;
@@ -39,7 +40,6 @@ const saveLocation = (locationId) => {
 // Supprimer la location
 const deleteLocation = (locationId) => {
     if (confirm("Êtes-vous sûr de vouloir supprimer cette location ?")) {
-        debugger;
         router.delete(route('locations.delete', { location: locationId }));
     }
 
@@ -71,7 +71,7 @@ const deleteLocation = (locationId) => {
                                     </th>
                                     <th class="px-4 py-2 text-left text-sm font-medium text-gray-700 border-b">Longitude
                                     </th>
-                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700 border-b">Team
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700 border-b">Featured
                                     </th>
                                     <th class="px-4 py-2 text-center text-sm font-medium text-gray-700 border-b">Actions
                                     </th>
@@ -96,7 +96,16 @@ const deleteLocation = (locationId) => {
                                     <td class="px-4 py-2 text-sm text-gray-800 border-b">{{ location.category }}</td>
                                     <td class="px-4 py-2 text-sm text-gray-800 border-b">{{ location.latitude }}</td>
                                     <td class="px-4 py-2 text-sm text-gray-800 border-b">{{ location.longitude }}</td>
-                                    <td class="px-4 py-2 text-sm text-gray-800 border-b">{{ location.team_id }}</td>
+                                    <td class="px-4 py-2 text-sm text-gray-800 border-b">
+                                        <div v-if="editingId === location.id && location.userCanDelete">
+                                            <select v-model="editData.is_featured"
+                                                class="w-full px-2 py-1 border rounded text-gray-700">
+                                                <option value="1">Oui</option>
+                                                <option value="0">Non</option>
+                                            </select>
+                                        </div>
+                                        <div v-else>{{ location.is_featured ? 'Oui' : 'Non' }}</div>
+                                    </td>
                                     <td class="px-4 py-2 text-center text-sm text-gray-800 border-b">
                                         <div class="flex justify-center gap-2">
                                             <!-- Mode édition activé -->

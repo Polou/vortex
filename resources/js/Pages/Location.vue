@@ -3,6 +3,7 @@ import { onMounted, watch, ref } from "vue";
 import { useForm, router } from '@inertiajs/vue3';
 import L from "leaflet";
 import AppLayout from '@/Layouts/AppLayout.vue';
+import 'leaflet.markercluster';
 
 let map;
 const selectedCategory = ref("");
@@ -23,6 +24,16 @@ watch(() => props.locations, (locations) => {
 }, { deep: true });
 
 onMounted(() => {
+    /*window.Echo.channel('locations')
+        .listen('LocationCreated', (event) => {
+            console.log('Nouvelle location en temps réel :', event);
+
+            // Ajouter un nouveau marqueur à la carte
+            L.marker([event.latitude, event.longitude])
+                .addTo(map)
+                .bindPopup(`<b>${event.name}</b><br>${event.description}`);
+        });*/
+
     map = L.map('map').setView([51.505, -0.09], 13);
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -59,11 +70,46 @@ const showLocations = (locations) => {
         }
     });
 
-    locations.forEach((element) =>
-        L.marker([element.latitude, element.longitude])
-            .addTo(map)
-            .bindPopup("<b>" + element.name + "</b><br>" + element.description)
-    );
+    // Icone par défaut
+    const defaultIcon = L.icon({
+        iconUrl: "images/marker-icon.png",
+    });
+
+    const featuredIcon = L.icon({
+        iconUrl: "images/marker-icon-featured.png",
+    });
+
+    const markerClusterGroup = L.markerClusterGroup({
+        iconCreateFunction: (cluster) => {
+            const count = cluster.getChildCount();
+            return L.divIcon({
+                html: `<div style="
+                    background-color: orange; 
+                    color: white; 
+                    border-radius: 50%; 
+                    width: 50px; 
+                    height: 50px; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    border: 2px solid white;">
+                        ${count}
+                   </div>`,
+                className: 'custom-cluster-icon',
+                iconSize: [50, 50],
+            });
+        },
+    });
+
+    locations.forEach((element) => {
+        const icon = element.is_featured ? featuredIcon : defaultIcon;
+        const marker = L.marker([element.latitude, element.longitude], { icon });
+        marker.bindPopup(`<b>${element.name}</b><br>${element.description}`);
+        markerClusterGroup.addLayer(marker);
+    });
+
+    // Ajouter le groupe de clusters sur la carte
+    map.addLayer(markerClusterGroup);
 }
 
 const applyFilter = () => {
