@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 let props = defineProps({
     locations: Array,
@@ -9,22 +9,29 @@ let props = defineProps({
     userTeamIds: Array,
 })
 
-const editingId = ref(null); // ID de la location en cours d'édition
-const editData = ref({ name: '', description: '', is_featured: 0 }); // Données temporaires pour l'édition
+const searchQuery = ref(""); // search query
+// filter locations
+const filteredLocations = computed(() => {
+    const query = searchQuery.value.toLowerCase();
+    return props.locations.filter(location =>
+        location.name.toLowerCase().includes(query) ||
+        location.description.toLowerCase().includes(query)
+    );
+});
 
-// Activer le mode edition
+const editingId = ref(null); // locaiton id being edited
+const editData = ref({ name: '', description: '', is_featured: 0 }); // temp location data to edit
+
 const startEditing = (location) => {
     editingId.value = location.id;
     editData.value = { name: location.name, description: location.description, is_featured: location.is_featured };
 };
 
-// Annuler l'edition
 const cancelEditing = () => {
     editingId.value = null;
     editData.value = { name: '', description: '', is_featured: 0 };
 };
 
-// Sauvegarder les modif
 const saveLocation = (locationId) => {
     router.patch(route('locations.update', { location: locationId }), {
         name: editData.value.name,
@@ -37,7 +44,6 @@ const saveLocation = (locationId) => {
     });
 };
 
-// Supprimer la location
 const deleteLocation = (locationId) => {
     if (confirm("Êtes-vous sûr de vouloir supprimer cette location ?")) {
         router.delete(route('locations.delete', { location: locationId }));
@@ -58,6 +64,12 @@ const deleteLocation = (locationId) => {
         <div class="py-6">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
                 <div class="bg-white shadow sm:rounded-lg p-6">
+
+                    <div class="flex justify-end mb-4">
+                        <input type="text" v-model="searchQuery" placeholder="Rechercher..."
+                            class="w-64 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full table-auto border-collapse">
                             <thead class="bg-gray-100">
@@ -78,7 +90,7 @@ const deleteLocation = (locationId) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="hover:bg-gray-50" v-for="location in props.locations" :key="location.id">
+                                <tr class="hover:bg-gray-50" v-for="location in filteredLocations" :key="location.id">
                                     <td class="px-4 py-2 text-sm text-gray-800 border-b">
                                         <div v-if="editingId === location.id">
                                             <input v-model="editData.name" type="text"
